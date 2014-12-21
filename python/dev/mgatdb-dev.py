@@ -113,6 +113,35 @@ at runtime, and we can use those integers as position indices.
 
 The human readable form of the grammar:
 """
+mga0 = [ ([],[('sel','D'),('cat','C')]),
+        (['the'],[('sel','N'),('cat','D')]), 
+        (['big'],[('cat','S')]),
+        (['bad'],[('cat','G')]),
+        (['wolf'],[('cat','N')]),
+        (['woods'],[('cat','N')]),
+        (['in'],[('sel','D'),('cat','P')]),
+]
+
+"""
+Note: this implementation of adjunction imposes a partial ordering
+      on the selectors.  Thus, we explicitly add an ordering which is represented
+      as a list of (from, to) binary relation edges. So, given the 
+      list [(a,b),(b,c)] it will be interpreted as a>=b>=c
+"""
+poe0 = [
+    ('D','G'),
+    ('G','N'),
+    ('N','P'),
+    ('P','C'),
+    ('C','T'),
+    ('T','V'),
+]
+
+# This maps categories to their adjuncts
+adj0 = {
+    'N': set(['S','G','P','C']),
+}
+
 mg0 = [ ([],[('sel','V'),('cat','C')]),
         ([],[('sel','V'),('pos','wh'),('cat','C')]),
         (['the'],[('sel','N'),('cat','D')]), 
@@ -211,21 +240,39 @@ def listNth(e,l): # return (first) position of e in l
     return l.index(e)
 
 
-# TODO: Ensure this works with new grammar
+# TODO: MAJOR ADDITION- add duplicate copy of feature id to tuple
 def intsOfF(sA,(ftype,fval)): # convert string representation of feature to integer pair
+    featureNum = listNth(fval,sA)
     if ftype=='cat':
-        return (0,listNth(fval,sA))
+        return (0,featureNum, featureNum)
     elif ftype=='sel':
-        return (1,listNth(fval,sA))
+        return (1,featureNum, featureNum)
     elif ftype=='neg':
-        return (2,listNth(fval,sA))
+        return (2,featureNum, featureNum)
     elif ftype=='pos':
-        return (3,listNth(fval,sA))
+        return (3,featureNum, featureNum)
     else:
         raise RuntimeError('error: intsOfF')
 """
 intsOfF(sA0,('sel','N'))
 """
+
+"""
+Changes an adj dictionary w/ a string rep of the features to an int rep
+which is used throughout the parser
+
+@param sA = array of values in the grammar
+@param adj = dictionary representing adjuncts of features
+             each key of adj must be a value in sA
+@return an adj dictionary with the keys replaced by their indices in sA
+"""
+def stringAdjDictToIntAdjDict(sA, adj):
+    intAdj = {}
+    for key in adj.keys():
+        intKey = listNth(key, sA)
+        intAdjuncts = map(lambda x: listNth(x, sA), adj[key])
+        intAdj[intKey] = intAdjuncts
+    return intAdj
 
 # TODO: Ensure this works with new grammar
 def fOfInts(sA,(itype,ival)): # convert integer representation back to string pair
@@ -387,7 +434,7 @@ def gIntoLexArrayTypeArray(sA,g):
     typeArray = [0]*len(sA)
     for t in lst:
         # print t
-        (i,j)=t[0]
+        (i,j,k)=t[0]
         lexArray[j]=t[1:]
         typeArray[j]=i
     return (lexArray,typeArray)
@@ -732,27 +779,34 @@ print obeysOrdering(4,2,g) # should be false
 '''
 
 # TODO: Update for new technique
-def exps((sA,lA,tA),inpt,((h,m),(hx,mx)),sofar):
+def exps((sA,lA,tA),adj,inpt,((h,m),(hx,mx)),sofar):
     for t in h:
         if len(t)>0 and isinstance(t[0],tuple):
             if t[0][0] == 1: # feature type 1 is 'sel'
-                print "Scan Scan Scan Scan"
-                print "h:"
-                print h
-                print "hx"
-                print hx
-                print "t:"
-                print t
-                print "End Scan Scan Scan Scan"
                 i = t[0][1] # set i to feature value
                 (terms,nonterms)= terminalsOf(t[1:])
                 # add condition for adjoin
                 # should be the case that current C is in adj[selected C] and
                 # obeysOrdering(adjective labels)
-                merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar)
-                merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar)
-                merge3(inpt,terms,i,((h,m),(hx,mx)),sofar)
-                merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar)
+                
+                adjunctsOfFeature = set([])
+                if i in adj:
+                    adjunctsOfFeature = adj[i]
+                print "adjuncts"
+                print adjunctsOfFeature
+                print "t:"
+                print t
+                print "terms:"
+                print terms
+                print "nonterms"
+                print nonterms
+                if False:
+                    pass 
+                else:
+                    merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar)
+                    merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar)
+                    merge3(inpt,terms,i,((h,m),(hx,mx)),sofar)
+                    merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar)
             elif t[0][0] == 3: # feature type 3 is 'pos'
                 i = t[0][1] # set i to feature value
                 ts = t[1:]
@@ -781,32 +835,23 @@ def insertNewParses(p,new_p,q,dq,exps):
             newParse = (new_p,inpt,safe_q)
             heapq.heappush(dq,newParse)
 
-def derive(lexArrays,minP,dq): # eliminate the recursion here?
+def derive(lexArrays,partialOrdering,adj,minP,dq): # eliminate the recursion here?
     # Do  a beam search
     p = 1.0
     while len(dq) > 0:
 #        printDQ(lexArrays,dq)
         (p,inpt,iq) = heapq.heappop(dq)
 #        print 'new loop through derive...'
-
-        print "***********************"
-        print "input:"
-        print inpt
-        print "predicted indexed categories:"
-        print iq
         print '# of parses in beam=',len(dq)+1,', p(best parse)=',(-1 * p)
         if len(iq)==0 and len(inpt)==0:
             return True  # success!
         elif len(iq)>0:
             prediction = heapq.heappop(iq)
-            print "prediction:"
-            print prediction
-            print "****************************"
             ic = prediction[1]
             sofar = []
-            exps(lexArrays,inpt,ic,sofar)
+            exps(lexArrays,adj,inpt,ic,sofar)
             if len(sofar)==0:
-                return derive(lexArrays,minP,dq)
+                return derive(lexArrays,partialOrdering,adj,minP,dq)
             else:
                 new_p = p / float(len(sofar))
                 if new_p < minP:
@@ -815,9 +860,11 @@ def derive(lexArrays,minP,dq): # eliminate the recursion here?
                     print 'improbable parses discarded'
     return False # failure!
 
-def recognize(lex,start,minP,inpt): # initialize and begin
+def recognize(lex,partialOrderingEdges,adj,start,minP,inpt): # initialize and begin
+    partialOrdering = graph_from_edges(partialOrderingEdges)
     sA = stringValsOfG(lex)
     (lA,tA) = gIntoLexArrayTypeArray(sA,lex)
+    intAdj = stringAdjDictToIntAdjDict(sA,adj)
     startInt = intsOfF(sA,('cat',start))[1]
     h = lA[startInt]
     m = [[]]*len(sA)
@@ -827,7 +874,7 @@ def recognize(lex,start,minP,inpt): # initialize and begin
     heapq.heapify(iq)
     dq = [(-1.0,inpt,iq)]
     heapq.heapify(dq)
-    return derive((sA,lA,tA),minP,dq)
+    return derive((sA,lA,tA),partialOrdering,intAdj,minP,dq)
 """
   first examples use only scan
 inpt0=['wine']
