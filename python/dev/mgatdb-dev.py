@@ -115,8 +115,8 @@ The human readable form of the grammar:
 """
 mga0 = [ ([],[('sel','D'),('cat','C')]),
         (['the'],[('sel','N'),('cat','D')]), 
-        (['big'],[('cat','S')]),
-        (['bad'],[('cat','G')]),
+        (['big'],[('sel','G'),('cat','S')]),
+        (['bad'],[('sel','N'),('cat','G')]),
         (['wolf'],[('cat','N')]),
         (['woods'],[('cat','N')]),
         (['in'],[('sel','D'),('cat','P')]),
@@ -133,8 +133,6 @@ poe0 = [
     ('G','N'),
     ('N','P'),
     ('P','C'),
-    ('C','T'),
-    ('T','V'),
 ]
 
 # This maps categories to their adjuncts
@@ -142,6 +140,28 @@ adj0 = {
     'N': set(['S','G','P','C']),
 }
 
+mga1 = [ ([],[('sel','V'),('cat','C')]), # = mg0 but without wh features, so no move
+        (['the'],[('sel','N'),('cat','D')]), 
+        (['king'],[('cat','N')]),
+        (['queen'],[('cat','N')]),
+        (['wine'],[('cat','N')]),
+        (['beer'],[('cat','N')]),
+        (['drinks'],[('sel','D'),('sel','D'),('cat','V')]),
+        (['prefers'],[('sel','D'),('sel','D'),('cat','V')]),
+        (['knows'],[('sel','C'),('sel','D'),('cat','V')]),
+        (['says'],[('sel','C'),('sel','D'),('cat','V')])
+        ]
+
+poe1 = [
+    
+]
+
+adj1 = {
+
+}
+
+
+# OLD GRAMMARS
 mg0 = [ ([],[('sel','V'),('cat','C')]),
         ([],[('sel','V'),('pos','wh'),('cat','C')]),
         (['the'],[('sel','N'),('cat','D')]), 
@@ -197,8 +217,9 @@ def btfyFtype(t):
     else:
         raise RuntimeError('btfyType('+str(t)+')')
 
-def btfyFeat((ftype,f)):
-    result = btfyFtype(ftype) + f
+# TODO Ensure this works with new framework
+def btfyFeat((ftype,f, fadj)):
+    result = btfyFtype(ftype) + f + "|" + fadj
     return result
 
 def btfyLexItem((s,fs)):
@@ -261,7 +282,7 @@ intsOfF(sA0,('sel','N'))
 Changes an adj dictionary w/ a string rep of the features to an int rep
 which is used throughout the parser
 
-@param sA = array of values in the grammar
+@param sA = array of features in the grammar
 @param adj = dictionary representing adjuncts of features
              each key of adj must be a value in sA
 @return an adj dictionary with the keys replaced by their indices in sA
@@ -274,16 +295,34 @@ def stringAdjDictToIntAdjDict(sA, adj):
         intAdj[intKey] = intAdjuncts
     return intAdj
 
+"""
+Changes a list of edges w/ string rep of features to a list of edges
+w/ int rep of features
+
+@param sA = array of features in grammar
+@param edges = array of edges in form (from, to) where from and to are string
+               representations of a feature
+@return array of edges in form (from, to) where from and to are int reps
+"""
+def stringOrderingToIntOrderingEdges(sA, edges):
+    intEdges = []
+    for edge in edges:
+        (frm, to) = edge
+        intFrm = listNth(frm, sA)
+        intTo = listNth(to, sA)
+        intEdges.append((intFrm,intTo))
+    return intEdges
+
 # TODO: Ensure this works with new grammar
-def fOfInts(sA,(itype,ival)): # convert integer representation back to string pair
+def fOfInts(sA,(itype,ival, iadj)): # convert integer representation back to string pair
     if itype==0:
-        return ('cat',sA[ival])
+        return ('cat',sA[ival], sA[iadj])
     elif itype==1:
-        return ('sel',sA[ival])
+        return ('sel',sA[ival], sA[iadj])
     elif itype==2:
-        return ('neg',sA[ival])
+        return ('neg',sA[ival], sA[iadj])
     elif itype==3:
-        return ('pos',sA[ival])
+        return ('pos',sA[ival], sA[iadj])
     else:
         raise RuntimeError('error: fOfInts')
 """
@@ -337,7 +376,7 @@ def lexTrees2stringTrees(sA,ts):
 # TODO: Ensure this works with new grammar
 # to get trees in the array, insert the root feature determined by the index        
 def lexArrays2lexTrees((sA,lA,tA)):
-    return [ ([(tA[i],i)]+lA[i]) for i in range(len(sA)) ]
+    return [ ([(tA[i],i,i)]+lA[i]) for i in range(len(sA)) ]
 """
 example: lexArrays2lexTrees((sA0,lA0,tA0))
 """
@@ -385,6 +424,7 @@ revItem3 = revItem(sA0,item3)
 revItemIntoLexTrees(lexTreeList0,revItem3)
 """
 
+# TODO: ensure this works with new grammar
 def gIntoLexTreeList(sA,g):
     lexTrees = []
     for ri in [revItem(sA,i) for i in g]:
@@ -761,29 +801,40 @@ Precondition: orderingGraph is acyclic
 @param orderingGraph: acyclic graph representing a partial ordering of keys
                       graph is a dict with each node, n, pointing to a list of
                       nodes that n has outgoing edges towards
-@return True iff key1 >= key2 in the given partial ordering                      
+@return 1 if key1 >= key2 in the given partial ordering, 0 if key2 < key1 and
+        -1 if they are incomparable
 '''
 def obeysOrdering(key1, key2, orderingGraph):
-    return key2 in list(dfs_topsort_traversal(orderingGraph,key1))
+    if key1 in orderingGraph:
+        inOrder = key2 in list(dfs_topsort_traversal(orderingGraph,key1))
+        if inOrder:
+            return 1
+        else:
+            if key2 in orderingGraph:
+                inRevOrder = key1 in list(dfs_topsort_traversal(orderingGraph,key2))
+                if inRevOrder:
+                    return 0
+
+    # incomparable if we made it here
+    return -1
     
 '''
 # example:
 g = graph_from_edges([(1,2),(2,3),(1,4)])
-print obeysOrdering(1,2,g) # should be true
-print obeysOrdering(3,1,g) # should be false
-print obeysOrdering(1,4,g) # should be true
-
-TODO: consider handling non-relation conditions differently
-print obeysOrdering(2,4,g) # should be false
-print obeysOrdering(4,2,g) # should be false
+print obeysOrdering(1,2,g) # should be 1
+print obeysOrdering(3,1,g) # should be 0
+print obeysOrdering(1,4,g) # should be 1
+print obeysOrdering(2,4,g) # should be -1
+print obeysOrdering(4,2,g) # should be -1
 '''
 
 # TODO: Update for new technique
-def exps((sA,lA,tA),adj,inpt,((h,m),(hx,mx)),sofar):
+def exps((sA,lA,tA),adj,partialOrdering,inpt,((h,m),(hx,mx)),sofar):
     for t in h:
         if len(t)>0 and isinstance(t[0],tuple):
             if t[0][0] == 1: # feature type 1 is 'sel'
                 i = t[0][1] # set i to feature value
+                j = t[0][2] # set j to last adj feature value
                 (terms,nonterms)= terminalsOf(t[1:])
                 # add condition for adjoin
                 # should be the case that current C is in adj[selected C] and
@@ -792,21 +843,25 @@ def exps((sA,lA,tA),adj,inpt,((h,m),(hx,mx)),sofar):
                 adjunctsOfFeature = set([])
                 if i in adj:
                     adjunctsOfFeature = adj[i]
+
+                print "******************"
+                print "input"
+                print inpt
+                print "sofar"
+                print sofar
                 print "adjuncts"
                 print adjunctsOfFeature
                 print "t:"
                 print t
-                print "terms:"
-                print terms
-                print "nonterms"
-                print nonterms
-                if False:
-                    pass 
-                else:
-                    merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar)
-                    merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar)
-                    merge3(inpt,terms,i,((h,m),(hx,mx)),sofar)
-                    merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar)
+                print "******************"
+                for adjunct in adjunctsOfFeature:
+                    if obeysOrdering(adjunct,j,partialOrdering):
+                        # add adjoin op to add trees w/ adjuncts
+                        pass 
+                merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar)
+                merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar)
+                merge3(inpt,terms,i,((h,m),(hx,mx)),sofar)
+                merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar)
             elif t[0][0] == 3: # feature type 3 is 'pos'
                 i = t[0][1] # set i to feature value
                 ts = t[1:]
@@ -841,6 +896,8 @@ def derive(lexArrays,partialOrdering,adj,minP,dq): # eliminate the recursion her
     while len(dq) > 0:
 #        printDQ(lexArrays,dq)
         (p,inpt,iq) = heapq.heappop(dq)
+        print "iQ:"
+        print iq 
 #        print 'new loop through derive...'
         print '# of parses in beam=',len(dq)+1,', p(best parse)=',(-1 * p)
         if len(iq)==0 and len(inpt)==0:
@@ -849,7 +906,7 @@ def derive(lexArrays,partialOrdering,adj,minP,dq): # eliminate the recursion her
             prediction = heapq.heappop(iq)
             ic = prediction[1]
             sofar = []
-            exps(lexArrays,adj,inpt,ic,sofar)
+            exps(lexArrays,adj,partialOrdering,inpt,ic,sofar)
             if len(sofar)==0:
                 return derive(lexArrays,partialOrdering,adj,minP,dq)
             else:
@@ -861,10 +918,11 @@ def derive(lexArrays,partialOrdering,adj,minP,dq): # eliminate the recursion her
     return False # failure!
 
 def recognize(lex,partialOrderingEdges,adj,start,minP,inpt): # initialize and begin
-    partialOrdering = graph_from_edges(partialOrderingEdges)
     sA = stringValsOfG(lex)
     (lA,tA) = gIntoLexArrayTypeArray(sA,lex)
     intAdj = stringAdjDictToIntAdjDict(sA,adj)
+    intOrderingEdges = stringOrderingToIntOrderingEdges(sA,partialOrderingEdges)
+    partialOrdering = graph_from_edges(intOrderingEdges)
     startInt = intsOfF(sA,('cat',start))[1]
     h = lA[startInt]
     m = [[]]*len(sA)
