@@ -12,4 +12,4 @@ Adapted from the top-down beam parser for MG[+SpIC_mrg] implemented here is desc
 http://www.linguistics.ucla.edu/people/stabler/Stabler12-2models.pdf
 
 See the wiki:  https://github.com/epstabler/mgtdb/wiki
-and READMEs in the subdirectories for details.
+and README in the subdirectories for details.
