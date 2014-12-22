@@ -36,11 +36,8 @@ for x in t.subtrees(): print x
 
 """
 ******************** Helper/Display Functions ******************** 
-   Printer functions that need to be updated for new representation marked
-   with TODO: rep
 """
 
-#TODO: rep
 """
    We can also represent trees with lists, where the first element is the root,
    and the rest is the list of the subtrees.
@@ -200,7 +197,6 @@ mg2 = [ ([],[('sel','V'),('cat','C')]), # = mg1 but without specs, so no merge2
         (['says'],[('sel','C'),('cat','V')])
         ]
 
-#TODO: Add support for adjective types
 """
 It will be good practice to print out those grammars in slightly
 more readable forms, using the following functions:
@@ -217,7 +213,6 @@ def btfyFtype(t):
     else:
         raise RuntimeError('btfyType('+str(t)+')')
 
-# TODO Ensure this works with new framework
 def btfyFeat((ftype,f, fadj)):
     result = btfyFtype(ftype) + f + "|" + fadj
     return result
@@ -260,8 +255,6 @@ sA2 = stringValsOfG(mg2)
 def listNth(e,l): # return (first) position of e in l
     return l.index(e)
 
-
-# TODO: MAJOR ADDITION- add duplicate copy of feature id to tuple
 def intsOfF(sA,(ftype,fval)): # convert string representation of feature to integer pair
     featureNum = listNth(fval,sA)
     if ftype=='cat':
@@ -313,7 +306,6 @@ def stringOrderingToIntOrderingEdges(sA, edges):
         intEdges.append((intFrm,intTo))
     return intEdges
 
-# TODO: Ensure this works with new grammar
 def fOfInts(sA,(itype,ival, iadj)): # convert integer representation back to string pair
     if itype==0:
         return ('cat',sA[ival], sA[iadj])
@@ -355,7 +347,6 @@ def subtreesOf(t):
     t[1:]
 """
 
-# TODO: Ensure this works with new grammar
 # some functions for print out
 def lexTree2stringTree(sA,t):
     if len(t)>0 and isinstance(t[0],tuple):
@@ -373,7 +364,6 @@ lexTree2stringTree(sA0,[intsOfF(sA0,('cat','D'))]+lA0[0])
 def lexTrees2stringTrees(sA,ts):
     return [lexTree2stringTree(sA,t) for t in ts]
 
-# TODO: Ensure this works with new grammar
 # to get trees in the array, insert the root feature determined by the index        
 def lexArrays2lexTrees((sA,lA,tA)):
     return [ ([(tA[i],i,i)]+lA[i]) for i in range(len(sA)) ]
@@ -395,7 +385,6 @@ def findRoot(f,trees): # find subtree with root matching f, if there is one
     return -1
 
 
-# TODO: Ensure this works with new grammar
 def revItemIntoLexTrees(lst, (ss,fs)):
      for f in fs:
          i = findRoot(f,lst)
@@ -424,7 +413,6 @@ revItem3 = revItem(sA0,item3)
 revItemIntoLexTrees(lexTreeList0,revItem3)
 """
 
-# TODO: ensure this works with new grammar
 def gIntoLexTreeList(sA,g):
     lexTrees = []
     for ri in [revItem(sA,i) for i in g]:
@@ -678,7 +666,6 @@ def memberFval(i,lst):
 ******************** Minimalist Parser Functions ********************
 """
 
-# TODO: Use new grammar and what not
 def scan(w,inpt,m,mx,sofar):
     if emptyListArray(sofar):
         (ok,remainderInt) = prefixT(w,inpt)
@@ -783,7 +770,7 @@ def move2(inpt,ts,i,((h,m),(hx,mx)),sofar):
                 sofar.append(exp)
 
 
-# TODO: Add adjoin operations
+# TODO: Make adjoin operations work
 # Case where W >= Z
 def adjoin1(lA,inpt,terms,nonterms,i,((h,m),(hx,mx)),sofar):
     print "<adjoin 1>"
@@ -901,7 +888,7 @@ print obeysOrdering(2,4,g) # should be -1
 print obeysOrdering(4,2,g) # should be -1
 '''
 
-# TODO: Update for new technique
+# TODO: Update for MGA
 def exps((sA,lA,tA),adj,partialOrdering,inpt,((h,m),(hx,mx)),sofar):
     for t in h:
         print "--------------------"
