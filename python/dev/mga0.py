@@ -15,15 +15,13 @@ Note: this implementation of adjunction imposes a partial ordering
 """
 partialOrderingEdges = [
     ('D','G'),
-    ('G','M'),
-    ('M','N'),
+    ('G','N'),
     ('N','P'),
     ('P','C'),
-    ('C','T'),
-    ('T','V'),
 ]
+
 
 # This maps categories to their adjuncts
 adjunctsOfCategory = {
-    'N': set(['S','G','M','P','C']),
+    'N': set(['S','G','P','C']),
 }
