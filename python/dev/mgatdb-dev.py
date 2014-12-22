@@ -687,7 +687,6 @@ def scan(w,inpt,m,mx,sofar):
             exp = (inpt[remainderInt:],[(([],m),([],mx))])
             sofar.append(exp)
 
-# TODO: Update merge1 for new grammar
 def merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar):
     if terms <> []:
         new_head_index=hx[:]
@@ -701,7 +700,6 @@ def merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar):
         exp = (inpt,[ic1,ic2])
         sofar.append(exp)
 
-# TODO: Update merge2 for new grammar
 def merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar):
     if nonterms <> []:
         new_head_index=hx[:]
@@ -716,7 +714,6 @@ def merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar):
         sofar.append(exp)
 
 
-# TODO: Update merge3 for new grammar
 def merge3(inpt,terms,i,((h,m),(hx,mx)),sofar):
     if terms <> []:
         for nxt in range(len(m)):
@@ -735,8 +732,6 @@ def merge3(inpt,terms,i,((h,m),(hx,mx)),sofar):
                 exp = (inpt,[ic1,ic2])
                 sofar.append(exp)
 
-
-# TODO: Update merge4 for new grammar
 def merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar):
     if nonterms <> []:
         for nxt in range(len(m)):
@@ -755,7 +750,6 @@ def merge4(inpt,nonterms,i,((h,m),(hx,mx)),sofar):
                 exp = (inpt,[ic1,ic2])
                 sofar.append(exp)
 
-# TODO: Update move1 for new grammar
 def move1(lA,inpt,ts,i,((h,m),(hx,mx)),sofar):
     if m[i] == []:  # SMC
         n = m[:]
@@ -769,7 +763,6 @@ def move1(lA,inpt,ts,i,((h,m),(hx,mx)),sofar):
         exp = (inpt,[ic1])
         sofar.append(exp)
 
-# TODO: Update move2 for new grammar
 def move2(inpt,ts,i,((h,m),(hx,mx)),sofar):
 #    print "move2?",
     for nxt in range(len(m)):
@@ -789,7 +782,87 @@ def move2(inpt,ts,i,((h,m),(hx,mx)),sofar):
                 exp = (inpt,[ic1])
                 sofar.append(exp)
 
-# TODO: Add adjoin operation
+
+# TODO: Add adjoin operations
+# Case where W >= Z
+def adjoin1(lA,inpt,terms,nonterms,i,((h,m),(hx,mx)),sofar):
+    print "<adjoin 1>"
+    print "********************"
+    print "inpt"
+    print inpt
+    print "********************"
+    print "terms"
+    print terms
+    print "********************"
+    print "nonterms"
+    print nonterms
+    print "********************"
+    print "i"
+    print i
+    print "********************"
+    print "h"
+    print h
+    print "********************"
+    print "hx"
+    print hx
+    print "********************"
+    print "m"
+    print m
+    print "********************"
+    print "mx"
+    print mx
+    print "********************"
+    print "sofar"
+    print sofar
+    print "********************"
+    new_head_index=hx[:]
+    new_head_index.append(0)
+    new_comp_index=hx[:]
+    new_comp_index.append(1)
+    empty_m = [[]]*len(m)
+    empty_mx = [[]]*len(mx)
+    ic1 = ((terms,empty_m),(new_head_index,empty_mx)) # no movers from lexical head, obviously
+    ic2 = ((lA[i],m),(new_comp_index,mx)) # movers from complement only
+    exp = (inpt,[ic1,ic2])
+    print "exp"
+    print exp
+
+    print "</adjoin 1>"
+    pass
+
+# Case where W is incomparable w/ Z
+def adjoin2(lA,inpt,terms,nonterms,i,((h,m),(hx,mx)),sofar):
+    print "<adjoin 2>"
+    print "********************"
+    print "inpt"
+    print inpt
+    print "********************"
+    print "terms"
+    print terms
+    print "********************"
+    print "nonterms"
+    print nonterms
+    print "********************"
+    print "i"
+    print i
+    print "********************"
+    print "h"
+    print h
+    print "********************"
+    print "hx"
+    print hx
+    print "********************"
+    print "m"
+    print m
+    print "********************"
+    print "mx"
+    print mx
+    print "********************"
+    print "sofar"
+    print sofar
+    print "********************"
+    print "</adjoin 2>"
+    pass
 
 # TODO: optimize this?
 '''
@@ -831,19 +904,19 @@ print obeysOrdering(4,2,g) # should be -1
 # TODO: Update for new technique
 def exps((sA,lA,tA),adj,partialOrdering,inpt,((h,m),(hx,mx)),sofar):
     for t in h:
+        print "--------------------"
+        print t
+        print "--------------------"
         if len(t)>0 and isinstance(t[0],tuple):
             if t[0][0] == 1: # feature type 1 is 'sel'
                 i = t[0][1] # set i to feature value
                 j = t[0][2] # set j to last adj feature value
                 (terms,nonterms)= terminalsOf(t[1:])
-                # add condition for adjoin
-                # should be the case that current C is in adj[selected C] and
-                # obeysOrdering(adjective labels)
                 
                 adjunctsOfFeature = set([])
                 if i in adj:
                     adjunctsOfFeature = adj[i]
-
+                '''
                 print "******************"
                 print "input"
                 print inpt
@@ -853,11 +926,18 @@ def exps((sA,lA,tA),adj,partialOrdering,inpt,((h,m),(hx,mx)),sofar):
                 print adjunctsOfFeature
                 print "t:"
                 print t
+                print "terms:"
+                print terms
+                print "nonterms:"
+                print nonterms
                 print "******************"
+                '''
                 for adjunct in adjunctsOfFeature:
-                    if obeysOrdering(adjunct,j,partialOrdering):
-                        # add adjoin op to add trees w/ adjuncts
-                        pass 
+                    ordered =  obeysOrdering(adjunct,j,partialOrdering)
+                    if ordered == 1:
+                        adjoin1(lA,inpt,terms,nonterms,i,((h,m),(hx,mx)),sofar)
+                    elif ordered == -1:
+                        adjoin2(lA,inpt,terms,nonterms,i,((h,m),(hx,mx)),sofar)
                 merge1(lA,inpt,terms,i,((h,m),(hx,mx)),sofar)
                 merge2(lA,inpt,nonterms,i,((h,m),(hx,mx)),sofar)
                 merge3(inpt,terms,i,((h,m),(hx,mx)),sofar)
@@ -896,8 +976,6 @@ def derive(lexArrays,partialOrdering,adj,minP,dq): # eliminate the recursion her
     while len(dq) > 0:
 #        printDQ(lexArrays,dq)
         (p,inpt,iq) = heapq.heappop(dq)
-        print "iQ:"
-        print iq 
 #        print 'new loop through derive...'
         print '# of parses in beam=',len(dq)+1,', p(best parse)=',(-1 * p)
         if len(iq)==0 and len(inpt)==0:
