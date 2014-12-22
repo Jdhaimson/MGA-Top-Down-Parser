@@ -1,13 +1,7 @@
 This directory contains files for a Python 2.x/NLTK implementation of
-the parser. The python3 subdirectory has a port (in progress!) for
-Python 3.x, together with a port of the NLTK drawing tools to Python 3.x.
+the original MG and the MGA parser that is in development parser.
 
-NLTK http://www.nltk.org/ works with Python 2.7, and we began with
-that environment mainly to make use of their tree display tools.
-See the NLTK installation instructions if you want to have the full 
-NLTK environment: http://nltk.org/install.html.
-
-Using NLTK installed under Python 2.7, you can start the parser 
+Using NLTK installed under Python 2.7, you can start the MG parser 
 with the files in this directory by typing, in a terminal window:
          python mgtdbp-dev.py
 Actually, For line mode editing, you can start the parser with: 
@@ -25,3 +19,8 @@ So if the grammar is mg0, as above, you could type one of:
 Then you will be given a prompt to which you can type
          h
 to get a list of the options.
+
+Right now, the MGA parser is still in development and is located in ./dev/mgatdb-dev.py
+
+To play with the MGA parser, you must execute that file from within a python terminal: execfile('mgatdb-dev.py')
+and then you can play around with some of the inner functions.  Note: it doesn't completely work yet ... but we're getting there!
